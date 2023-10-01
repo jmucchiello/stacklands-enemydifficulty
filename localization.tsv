@@ -1,1 +1,4 @@
 Term	Notes	English
+enemydifficultymod_strength		Enemy Health Modifier
+enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
+enemydifficultymod_reset		Reset Defaults

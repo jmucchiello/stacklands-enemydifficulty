@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>ExampleMod</AssemblyName>
+    <AssemblyName>EnemyDifficultyMod</AssemblyName>
     <TargetFramework>netstandard2.1</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>warnings</Nullable>
     <LangVersion>latest</LangVersion>
+    <RootNamespace>EnemyDifficultyModNS</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -68,6 +69,9 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>$(stacklands)/Stacklands_Data/Managed/UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\Program Files (x86)\Steam\steamapps\common\Stacklands\Stacklands_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
