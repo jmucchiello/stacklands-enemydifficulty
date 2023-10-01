@@ -17,6 +17,7 @@ namespace EnemyDifficultyModNS
         private void Awake()
         {
             instance = this;
+            WMCreateCard_Patch.WM_IsLoadingSaveRound = new Traverse(I.WM).Field<bool>("IsLoadingSaveRound");
             ConfigSlider.Logger = instance.Logger;
             SetupConfig();
             Harmony.PatchAll();
@@ -29,15 +30,20 @@ namespace EnemyDifficultyModNS
             configStrength = new ConfigSlider("enemydifficultymod_strength", Config, "enemydifficultymod_strength", OnChangeStrength, 50, 300, 10, 100);
             configStrength.setSliderText = delegate (int value)
             {
-//                string txt = I.Xlat("enemydifficultymod_strength") + ": " + ConfigEntryHelper.ColorText(Color.blue, $"{value}%");
+                //                string txt = I.Xlat("enemydifficultymod_strength") + ": " + ConfigEntryHelper.ColorText(Color.blue, $"{value}%");
                 string txt = ConfigEntryHelper.CenterAlign(ConfigEntryHelper.ColorText(Color.blue, $"{value}%"));
                 return txt;
             };
+            CustomButton_Update.sliders.Add("SliderButtonenemydifficultymod_strength", configStrength);
             ConfigFreeText resetDefault = new ConfigFreeText("none", Config, "enemydifficultymod_reset");
             resetDefault.TextAlign = TextAlign.Right;
             resetDefault.Clicked += delegate (ConfigEntryBase _, CustomButton _)
             {
                 configStrength?.SetDefaults();
+            };
+            Config.OnSave = delegate ()
+            {
+                ApplyConfig();
             };
         }
 
@@ -48,11 +54,12 @@ namespace EnemyDifficultyModNS
 
         private void ApplyConfig()
         {
-
+            ApplyStrengthMultiplier();
         }
 
         public override void Ready()
         {
+            ApplyConfig();
             Logger.Log("Ready!");
         }
     }

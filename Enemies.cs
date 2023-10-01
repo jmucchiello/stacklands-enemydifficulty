@@ -9,7 +9,7 @@ namespace EnemyDifficultyModNS
         public void ApplyStrengthMultiplier()
         {
             EmemySpawning_Patch.SpawnMultiplier = (float)configStrength.Value/100;
-            EnemyDifficultyMod.Log($"Spawned Enemies Strength Multiplies: {EmemySpawning_Patch.SpawnMultiplier}");
+            Log($"Spawned Enemies Strength Multiplier: {EmemySpawning_Patch.SpawnMultiplier}");
         }
     }
 
@@ -25,7 +25,7 @@ namespace EnemyDifficultyModNS
             string s = String.Join(",", cardbags.ToArray());
             EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - list of cardbags {s} strength {strength:F02}");
             strength *= SpawnMultiplier;
-            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - modified strength {strength:F02}");
+            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - modified strength {strength:F02} {SpawnMultiplier}");
         }
     }
 
@@ -53,7 +53,7 @@ namespace EnemyDifficultyModNS
         public static Traverse<bool> WM_IsLoadingSaveRound;
         static void Postfix(WorldManager __instance, CardData __result) //, ref Vector3 position)
         {
-            bool loading = WM_IsLoadingSaveRound.Value;
+            bool loading = WM_IsLoadingSaveRound?.Value ?? true;
             if (!loading && __result is Combatable c && __result is not BaseVillager)
             {
                 c.BaseCombatStats.MaxHealth = (int)(c.BaseCombatStats.MaxHealth * EmemySpawning_Patch.SpawnMultiplier);

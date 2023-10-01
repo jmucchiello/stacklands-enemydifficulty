@@ -24,17 +24,18 @@ namespace EnemyDifficultyModNS
 
         public Action<int> onChange;
 
-        public static GameObject Slider = null;
+        public GameObject Slider = null;
         GameObject SliderFill = null;
         GameObject SliderText = null;
         Image SliderImage = null;
-        public static CustomButton SliderBtn = null;
-        public static RectTransform SliderRectTransform = null;
-        public static Vector2 SliderSize = Vector2.zero;
+        public CustomButton SliderBtn = null;
+        public RectTransform SliderRectTransform = null;
+        public Vector2 SliderSize = Vector2.zero;
         bool ParentIsPopup = false;
 
-        public static int LowerBound = 0, UpperBound = 1, Step = 1;
-        public static int Span = 0;
+        public int LowerBound = 0, UpperBound = 1, Step = 1;
+        public int Span = 0;
+
 
         public static (T,T) Swap<T>(T a, T b) { return (b, a); }
         public static void Swap<T>(ref T a, ref T b) { T c = a; a = b; b = c; }
@@ -74,7 +75,9 @@ namespace EnemyDifficultyModNS
                         Slider = x?.gameObject;
                         Log($"Slider {Slider == null}");
                         x.SetParentClean(parentIsPopup ? I.Modal.ButtonParent : I.MOS.ButtonsParent);
+#pragma warning disable 8602
                         Slider.name = "SliderBackground" + Name;
+#pragma warning restore 8602
                         EnemyDifficultyMod.Log($"Slider {Slider}");
                         for (int i = 0; i < Slider.transform.childCount; ++i)
                         {
@@ -89,7 +92,9 @@ namespace EnemyDifficultyModNS
                         EnemyDifficultyMod.Log(ex.ToString());
                     }
 
+#pragma warning disable 8602
                     LayoutElement layout = Slider.GetComponent<LayoutElement>();
+#pragma warning restore 8602
                     layout.preferredHeight = -1; // original component has a fixed height
 
                     SliderRectTransform = Slider.GetComponent<RectTransform>();
@@ -111,15 +116,15 @@ namespace EnemyDifficultyModNS
                         SliderRectTransform.localScale = Vector3.one;
                         SliderRectTransform.localPosition = Vector3.zero;
                         SliderSize = SliderRectTransform.offsetMax - SliderRectTransform.offsetMin;
-                        Vector2 pos = InputController.instance.ClampedMousePosition();
-                        RectTransformUtility.ScreenPointToLocalPointInRectangle(SliderRectTransform, pos, null, out Vector2 newpos);
-                        Vector2 tmp = newpos;
+                        Vector2 globalMousePos = InputController.instance.ClampedMousePosition();
+                        RectTransformUtility.ScreenPointToLocalPointInRectangle(SliderRectTransform, globalMousePos, null, out Vector2 localMousePos);
+                        Vector2 tmp = localMousePos;
                         float value = tmp.x / SliderSize.x;
                         int OldValue = Value;
-                        Value = Math.Clamp((int)(Span * value + step / 2) / step * step + low, low, high);
+                        Value = Math.Clamp((int)(Span * value + Step / 2) / Step * Step + LowerBound, LowerBound, UpperBound);
                         SetSlider();
                         if (OldValue != Value) onChange?.Invoke(Value);
-                        Log($"test.clicked called {SliderSize} {pos} {newpos} {value} {Value}");
+                        Log($"test.clicked called {SliderSize} {globalMousePos} {localMousePos} {value} {Value}");
                     };
                     SetSlider();
                 }
@@ -150,19 +155,30 @@ namespace EnemyDifficultyModNS
     [HarmonyPatch(typeof(CustomButton),"Update")]
     public class CustomButton_Update
     {
+        public static Dictionary<string, ConfigSlider> sliders = new();
         public static void Postfix(CustomButton __instance)
         {
-            Vector2 pos = InputController.instance.ClampedMousePosition();
-            RectTransform SliderRectTransform = ConfigSlider.Slider?.GetComponent<RectTransform>();
-            if (__instance.name == "SliderButtonenemydifficultymod_strength" && 
-                SliderRectTransform != null && 
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(SliderRectTransform, pos, null, out Vector2 newpos))
+            if (sliders.TryGetValue(__instance.name, out ConfigSlider ConfigSlider))
             {
-                Vector2 SliderSize = SliderRectTransform.offsetMax - SliderRectTransform.offsetMin;
-                float value = (newpos.x + SliderSize.x) / SliderSize.x;
-                int Value = Math.Clamp((int)(ConfigSlider.Span * value + ConfigSlider.Step / 2) / ConfigSlider.Step * ConfigSlider.Step + ConfigSlider.LowerBound, ConfigSlider.LowerBound, ConfigSlider.UpperBound);
-                __instance.TooltipText = $"{Value}%";
-//                ConfigSlider.Log($"{newpos} {ConfigSlider.SliderSize} Values {value:0.00}, {Value}, {ConfigSlider.Span} {ConfigSlider.Step} {ConfigSlider.LowerBound} {ConfigSlider.UpperBound} {__instance.name}");
+//                EnemyDifficultyMod.Log($"CustomButton_Update {__instance.name} {mousedown}");
+                RectTransform SliderRectTransform = ConfigSlider.Slider?.GetComponent<RectTransform>();
+                if (SliderRectTransform != null)
+                {
+                    Vector2 globalMousePos = InputController.instance.ClampedMousePosition();
+                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(SliderRectTransform, globalMousePos, null, out Vector2 localMousePos))
+                    {
+                        Vector2 SliderSize = SliderRectTransform.offsetMax - SliderRectTransform.offsetMin;
+                        float value = (localMousePos.x + SliderSize.x) / SliderSize.x;
+                        int Value = Math.Clamp((int)(ConfigSlider.Span * value + ConfigSlider.Step / 2) / ConfigSlider.Step * ConfigSlider.Step + ConfigSlider.LowerBound, ConfigSlider.LowerBound, ConfigSlider.UpperBound);
+                        __instance.TooltipText = $"{Value}%";
+                        if (InputController.instance.MouseIsDragging)
+                        {
+                            ConfigSlider.Value = Value;
+                            ConfigSlider.SetSlider();
+                        }
+//                        ConfigSlider.Log($"{mousedown} {localMousePos} {ConfigSlider.SliderSize} Values {value:0.00}, {Value}, {ConfigSlider.Span} {ConfigSlider.Step} {ConfigSlider.LowerBound} {ConfigSlider.UpperBound} {__instance.name}");
+                    }
+                }
             }
         }
     }
