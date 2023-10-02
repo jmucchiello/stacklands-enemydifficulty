@@ -38,7 +38,7 @@ stdout, stderr = p.communicate()
 if p.returncode != 0:
     print(stdout.decode())
     exit(p.returncode)
-print(f"built in {time.time() - start_time:.2f}s")
+print(f"build started {time.strftime('%H:%I:%S', time.localtime(start_time))}, finished in {time.time() - start_time:.2f}s")
 
 # grab metadata
 found_csprojs = list(Path(".").glob("*.csproj"))
