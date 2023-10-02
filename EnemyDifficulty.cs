@@ -30,7 +30,6 @@ namespace EnemyDifficultyModNS
             configStrength = new ConfigSlider("enemydifficultymod_strength", Config, "enemydifficultymod_strength", OnChangeStrength, 50, 300, 10, 100);
             configStrength.setSliderText = delegate (int value)
             {
-                //                string txt = I.Xlat("enemydifficultymod_strength") + ": " + ConfigEntryHelper.ColorText(Color.blue, $"{value}%");
                 string txt = ConfigEntryHelper.CenterAlign(ConfigEntryHelper.ColorText(Color.blue, $"{value}%"));
                 return txt;
             };

@@ -8,7 +8,7 @@ namespace EnemyDifficultyModNS
     {
         public void ApplyStrengthMultiplier()
         {
-            EmemySpawning_Patch.SpawnMultiplier = (float)configStrength.Value/100;
+            EmemySpawning_Patch.SpawnMultiplier = (float)configStrength.Value/100f;
             Log($"Spawned Enemies Strength Multiplier: {EmemySpawning_Patch.SpawnMultiplier}");
         }
     }
@@ -23,9 +23,9 @@ namespace EnemyDifficultyModNS
         static void Prefix(List<CardIdWithEquipment> __result, List<SetCardBagType> cardbags, ref float strength, bool canHaveInventory)
         {
             string s = String.Join(",", cardbags.ToArray());
-            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - list of cardbags {s} strength {strength:F02}");
+            float originalStrength = strength;
             strength *= SpawnMultiplier;
-            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - modified strength {strength:F02} {SpawnMultiplier}");
+            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
         }
     }
 

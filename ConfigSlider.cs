@@ -20,7 +20,7 @@ namespace EnemyDifficultyModNS
         public override object BoxedValue { get => Value; set => Value = (int)value; }
 
         public int Value { get; set; }
-        public int DefaultValue;
+        public readonly int DefaultValue;
 
         public Action<int> onChange;
 
@@ -119,12 +119,12 @@ namespace EnemyDifficultyModNS
                         Vector2 globalMousePos = InputController.instance.ClampedMousePosition();
                         RectTransformUtility.ScreenPointToLocalPointInRectangle(SliderRectTransform, globalMousePos, null, out Vector2 localMousePos);
                         Vector2 tmp = localMousePos;
-                        float value = tmp.x / SliderSize.x;
-                        int OldValue = Value;
-                        Value = Math.Clamp((int)(Span * value + Step / 2) / Step * Step + LowerBound, LowerBound, UpperBound);
+                        float rawValue = tmp.x / SliderSize.x;
+                        int oldValue = Value;
+                        Value = Math.Clamp((int)(Span * rawValue + Step / 2) / Step * Step + LowerBound, LowerBound, UpperBound);
                         SetSlider();
-                        if (OldValue != Value) onChange?.Invoke(Value);
-                        Log($"test.clicked called {SliderSize} {globalMousePos} {localMousePos} {value} {Value}");
+                        if (oldValue != Value) onChange?.Invoke(Value);
+                        Log($"test.clicked called {SliderSize} {globalMousePos} {localMousePos} {rawValue} {Value}");
                     };
                     SetSlider();
                 }
@@ -135,9 +135,9 @@ namespace EnemyDifficultyModNS
         public void SetSlider()
         {
             SliderImage.fillAmount = (float)(Value - LowerBound) / (float)(UpperBound - LowerBound);
-            string btnText = SizeText(36, setSliderText?.Invoke(Value) ?? Text + " <color=blue>" + Value.ToString() + "</color>");
+            string btnText = SizeText(36, setSliderText?.Invoke(Value) ?? Text + ": <color=blue>" + Value.ToString() + "</color>");
             SliderBtn.TextMeshPro.text = btnText;
-//            SliderBtn.TooltipText = setSliderTooltip?.Invoke(Value);
+//            SliderBtn.TooltipText = setSliderTooltip?.Invoke(Value); // handled in CustomButton_Update patch
             Log($"Fill Amount {LowerBound} {UpperBound} {Value} {SliderImage.fillAmount}");
             Config.Data[Name] = Value;
         }
