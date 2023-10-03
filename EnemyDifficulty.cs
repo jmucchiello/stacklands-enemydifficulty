@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace EnemyDifficultyModNS
 {
+    [HarmonyPatch]
     public partial class EnemyDifficultyMod : Mod
     {
         public static EnemyDifficultyMod instance;
@@ -60,6 +61,15 @@ namespace EnemyDifficultyModNS
         {
             ApplyConfig();
             Logger.Log("Ready!");
+        }
+
+        [HarmonyPatch(typeof(WorldManager), nameof(WorldManager.LoadSaveRound))]
+        [HarmonyPostfix]
+        static void WorldManager_LoadSaveRound(WorldManager __instance, SaveRound saveRound)
+        {
+            instance.ApplyConfig();
+            I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
+                                 I.Xlat("enemydifficultymod_strength") + $": " + ConfigEntryHelper.ColorText(Color.blue, $"{ instance.configStrength.Value}%"));
         }
     }
 }
