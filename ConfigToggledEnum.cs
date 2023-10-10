@@ -1,6 +1,10 @@
-﻿using UnityEngine;
+﻿using HarmonyLib;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using UnityEngine;
 
-namespace CommonModNS
+namespace EnemyDifficultyModNS
 {
     public class ConfigToggledEnum<T> : ConfigEntryHelper where T : Enum
     {

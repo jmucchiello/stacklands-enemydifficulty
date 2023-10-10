@@ -3,9 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using CommonModNS;
 
-namespace CommonModNS
+namespace EnemyDifficultyModNS
 {
     public enum TextAlign { Left, Center, Right }
 
