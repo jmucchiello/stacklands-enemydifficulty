@@ -6,13 +6,12 @@ using System.Transactions;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
+using CommonModNS;
 
-namespace EnemyDifficultyModNS
+namespace CommonModNS
 {
     public class ConfigSlider : ConfigEntryHelper
     {
-        public static ModLogger Logger;
-        public static void Log(string message) => Logger?.Log(message);
         public delegate string SetSliderText(int value);
         public SetSliderText setSliderText;
         public SetSliderText setSliderTooltip;
@@ -48,7 +47,7 @@ namespace EnemyDifficultyModNS
             Config = config;
             ValueType = typeof(int);
             onChange = OnChange;
-            EnemyDifficultyMod.Log($"{name} {parentIsPopup}");
+            I.Log($"{name} {parentIsPopup}");
             ParentIsPopup = parentIsPopup;
             if (low > high) (low, high) = Swap(low, high);
             LowerBound = low;
@@ -69,16 +68,16 @@ namespace EnemyDifficultyModNS
                     try
                     {
                         Transform tb = GameScreen.instance.transform.Find("TimeBackground");
-                        Log($"{Name} {ParentIsPopup} {tb}");
+                        I.Log($"{Name} {ParentIsPopup} {tb}");
                         Transform x = UnityEngine.Object.Instantiate(tb);
-                        Log($"Slider {x == null}");
+                        I.Log($"Slider {x == null}");
                         Slider = x?.gameObject;
-                        Log($"Slider {Slider == null}");
+                        I.Log($"Slider {Slider == null}");
                         x.SetParentClean(parentIsPopup ? I.Modal.ButtonParent : I.MOS.ButtonsParent);
 #pragma warning disable 8602
                         Slider.name = "SliderBackground" + Name;
 #pragma warning restore 8602
-                        EnemyDifficultyMod.Log($"Slider {Slider}");
+                        I.Log($"Slider {Slider}");
                         for (int i = 0; i < Slider.transform.childCount; ++i)
                         {
                             GameObject goChild = Slider.transform.GetChild(i).gameObject;
@@ -89,7 +88,7 @@ namespace EnemyDifficultyModNS
                     }
                     catch (Exception ex)
                     {
-                        EnemyDifficultyMod.Log(ex.ToString());
+                        I.Log(ex.ToString());
                     }
 
 #pragma warning disable 8602
@@ -122,23 +121,23 @@ namespace EnemyDifficultyModNS
                         float rawValue = tmp.x / SliderSize.x;
                         int oldValue = Value;
                         Value = Math.Clamp((int)(Span * rawValue + Step / 2) / Step * Step + LowerBound, LowerBound, UpperBound);
-                        SetSlider();
+                        UpdateSlider();
                         if (oldValue != Value) onChange?.Invoke(Value);
-                        Log($"test.clicked called {SliderSize} {globalMousePos} {localMousePos} {rawValue} {Value}");
+                        I.Log($"test.clicked called {SliderSize} {globalMousePos} {localMousePos} {rawValue} {Value}");
                     };
-                    SetSlider();
+                    UpdateSlider();
                 }
             };
             config.Entries.Add(this);
         }
 
-        public void SetSlider()
+        public void UpdateSlider()
         {
             SliderImage.fillAmount = (float)(Value - LowerBound) / (float)(UpperBound - LowerBound);
             string btnText = SizeText(36, setSliderText?.Invoke(Value) ?? Text + ": <color=blue>" + Value.ToString() + "</color>");
             SliderBtn.TextMeshPro.text = btnText;
 //            SliderBtn.TooltipText = setSliderTooltip?.Invoke(Value); // handled in CustomButton_Update patch
-            Log($"Fill Amount {LowerBound} {UpperBound} {Value} {SliderImage.fillAmount}");
+            I.Log($"Fill Amount {LowerBound} {UpperBound} {Value} {SliderImage.fillAmount}");
             Config.Data[Name] = Value;
         }
 
@@ -146,7 +145,7 @@ namespace EnemyDifficultyModNS
         {
             bool change = Value != DefaultValue;
             Value = DefaultValue;
-            SetSlider();
+            UpdateSlider();
             if (change) onChange?.Invoke(Value);
         }
         
@@ -160,7 +159,7 @@ namespace EnemyDifficultyModNS
         {
             if (sliders.TryGetValue(__instance.name, out ConfigSlider ConfigSlider))
             {
-//                EnemyDifficultyMod.Log($"CustomButton_Update {__instance.name} {mousedown}");
+//                I.Log($"CustomButton_Update {__instance.name} {mousedown}");
                 RectTransform SliderRectTransform = ConfigSlider.Slider?.GetComponent<RectTransform>();
                 if (SliderRectTransform != null)
                 {
@@ -174,9 +173,9 @@ namespace EnemyDifficultyModNS
                         if (InputController.instance.MouseIsDragging)
                         {
                             ConfigSlider.Value = Value;
-                            ConfigSlider.SetSlider();
+                            ConfigSlider.UpdateSlider();
                         }
-//                        ConfigSlider.Log($"{mousedown} {localMousePos} {ConfigSlider.SliderSize} Values {value:0.00}, {Value}, {ConfigSlider.Span} {ConfigSlider.Step} {ConfigSlider.LowerBound} {ConfigSlider.UpperBound} {__instance.name}");
+//                        I.Log($"{mousedown} {localMousePos} {ConfigSlider.SliderSize} Values {value:0.00}, {Value}, {ConfigSlider.Span} {ConfigSlider.Step} {ConfigSlider.LowerBound} {ConfigSlider.UpperBound} {__instance.name}");
                     }
                 }
             }
