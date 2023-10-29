@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using CommonModNS;
+using HarmonyLib;
 using UnityEngine;
 using System.Reflection.Emit;
 
@@ -8,13 +9,12 @@ namespace EnemyDifficultyModNS
     {
         public void ApplyStrengthMultiplier()
         {
-            EmemySpawning_Patch.SpawnMultiplier = (float)configStrength.Value/100f;
+            EmemySpawning_Patch.SpawnMultiplier = StrengthModifer = (float)StrengthPercentage / 100f;
             Log($"Spawned Enemies Strength Multiplier: {EmemySpawning_Patch.SpawnMultiplier}");
         }
     }
 
-    [HarmonyPatch(typeof(SpawnHelper))]
-    [HarmonyPatch(nameof(SpawnHelper.GetEnemiesToSpawn))]
+    [HarmonyPatch(typeof(SpawnHelper),nameof(SpawnHelper.GetEnemiesToSpawn))]
     [HarmonyPatch(new Type[] { typeof(List<SetCardBagType>), typeof(float), typeof(bool) })]
     internal class EmemySpawning_Patch
     {
@@ -25,24 +25,7 @@ namespace EnemyDifficultyModNS
             string s = String.Join(",", cardbags.ToArray());
             float originalStrength = strength;
             strength *= SpawnMultiplier;
-            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
-        }
-    }
-
-//    [HarmonyPatch(typeof(Crab),nameof(Crab.Die))]
-    internal class MommaCrab_Patch
-    {
-        public static int MommaCrabFrequency = 3;
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> result = new CodeMatcher(instructions)
-                .MatchStartForward(
-                    new CodeMatch(OpCodes.Ldc_I4_3)
-                )
-                .Set(OpCodes.Ldsfld, AccessTools.Field(typeof(MommaCrab_Patch),"MommaCrabFrequency"))
-                .InstructionEnumeration()
-                .ToList();
-            return result;
+//            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
         }
     }
 
@@ -58,8 +41,26 @@ namespace EnemyDifficultyModNS
             {
                 c.BaseCombatStats.MaxHealth = (int)(c.BaseCombatStats.MaxHealth * EmemySpawning_Patch.SpawnMultiplier);
                 c.HealthPoints = c.ProcessedCombatStats.MaxHealth;
-//                position = __instance.GetRandomSpawnPosition();
             }
         }
     }
+
+#if false
+    [HarmonyPatch(typeof(Crab),nameof(Crab.Die))]
+    internal class MommaCrab_Patch
+    {
+        public static int MommaCrabFrequency = 3;
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> result = new CodeMatcher(instructions)
+                .MatchStartForward(
+                    new CodeMatch(OpCodes.Ldc_I4_3)
+                )
+                .Set(OpCodes.Ldsfld, AccessTools.Field(typeof(MommaCrab_Patch), "MommaCrabFrequency"))
+                .InstructionEnumeration()
+                .ToList();
+            return result;
+        }
+    }
+#endif
 }

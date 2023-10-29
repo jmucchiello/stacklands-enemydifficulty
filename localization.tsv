@@ -1,5 +1,9 @@
 Term	Notes	English
 enemydifficultymod_strength		Enemy Health Modifier
+enemydifficultymod_strengthlocked		Enemy Health Modifer (Locked)
 enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
 enemydifficultymod_reset		Reset Defaults
 enemydifficultymod_notify		Enemy Difficulty Mod
+enemydifficultymod_savetitle		Enemy Difficulty Mod
+enemydifficultymod_tournament		Tournament Mode
+enemydifficultymod_tournament_tooltip		Applies only to new games, when enabled and a new game Run is started,#the setting for the Enemy Health Modifier is stored in the save file.#When that game is played, the setting in the Mod Option screen is ignored#and the value stored in the save file is used.

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>EnemyDifficultyMod</AssemblyName>
@@ -8,6 +8,21 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>EnemyDifficultyModNS</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="ConfigSlider.csx" />
+    <None Remove="ConfigSlider.csy" />
+    <None Remove="ConfigSlider.csz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\stacklands-common\ConfigEntryBool.cs" Link="Common\ConfigEntryBool.cs" />
+    <Compile Include="..\stacklands-common\ConfigEntryHelper.cs" Link="Common\ConfigEntryHelper.cs" />
+    <Compile Include="..\stacklands-common\ConfigFreeText.cs" Link="Common\ConfigFreeText.cs" />
+    <Compile Include="..\stacklands-common\ConfigSlider.cs" Link="Common\ConfigSlider.cs" />
+    <Compile Include="..\stacklands-common\Instances.cs" Link="Common\Instances.cs" />
+    <Compile Include="..\stacklands-common\WorldManagerPatches.cs" Link="Common\WorldManagerPatches.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -73,5 +88,9 @@
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\Program Files (x86)\Steam\steamapps\common\Stacklands\Stacklands_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\" />
   </ItemGroup>
 </Project>
