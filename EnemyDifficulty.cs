@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace EnemyDifficultyModNS
 {
-    public enum SaveLockStatus { Unknown, Locked, Nolock, Broken }
+    public enum SettingsMode { Casual, Tournament, Disabled, Tampered }
 
     [HarmonyPatch]
     public partial class EnemyDifficultyMod : Mod
@@ -16,23 +16,27 @@ namespace EnemyDifficultyModNS
         public static void Log(string msg) => instance.Logger.Log(msg);
         public static void LogError(string msg) => instance.Logger.LogError(msg);
 
-        public static float StrengthModifer { get; private set; } // set in ApplyConfig()
+        public static float StrengthModifier { get => EmemySpawning_Patch.SpawnMultiplier; private set => EmemySpawning_Patch.SpawnMultiplier = value; }
 
-        public static int StrengthPercentage => instance?.configStrength?.Value ?? 100;
-        public static bool StrModIsLocked { get; set; } = false;
-        public static SaveLockStatus SaveLockStatus { get; set; } = SaveLockStatus.Unknown;
+        public static int StrengthPercentage { get => instance?.configStrength?.Value ?? 100; } // always the value from Mod Options Screen
+        public static SettingsMode TournamentMode { get => instance?.configTournament?.Value ?? SettingsMode.Casual; } // always the value from Mod Options Screen
+        public static SettingsMode SettingsMode { get; set; } = SettingsMode.Casual;
 
         private ConfigSlider configStrength;
-        private ConfigEntryBool configTournament;
+//        private ConfigEntryBool configTournament;
+        private ConfigToggledEnum<SettingsMode> configTournament;
+        public ConfigFreeText clearCurrentSave;
 
         private void Awake()
         {
             instance = this;
+            SetupConfig();
             WorldManagerPatches.LoadSaveRound += WM_OnLoad;
             WorldManagerPatches.GetSaveRound += WM_OnSave;
+            WorldManagerPatches.StartNewRound += WM_OnNewRound;
+            WorldManagerPatches.Play += WM_OnPlay;
             WorldManagerPatches.ApplyPatches(Harmony);
-            WMCreateCard_Patch.WM_IsLoadingSaveRound = new Traverse(I.WM).Field<bool>("IsLoadingSaveRound");
-            SetupConfig();
+            WMCreateCard_Patch.Setup();
             Harmony.PatchAll();
         }
 
@@ -43,19 +47,46 @@ namespace EnemyDifficultyModNS
                 TextAlign = TextAlign.Center
             };
             configStrength = new ConfigSlider("enemydifficultymod_strength", Config, OnChangeStrength, 50, 300, 10, 100);
-            
-            configTournament = new ConfigEntryBool("enemydifficultymod_tournament", Config, false)
+
+            configTournament = new ConfigToggledEnum<SettingsMode>("enemydifficultymod_tournament", Config, SettingsMode.Casual, new ConfigUI()
             {
-                onDisplayText = delegate { return I.Xlat("enemydifficultymod_tournament") + ": " + ConfigEntryHelper.ColorText(Color.blue, I.Xlat(configTournament.Value ? "label_on" : "label_off")); },
-                onDisplayTooltip = delegate { return I.Xlat("enemydifficultymod_tournament_tooltip"); }
+                NameTerm = "enemydifficultymod_tournament",
+                TooltipTerm = "enemydifficultymod_tournament_tooltip"
+            }){
+                currentValueColor = Color.blue,
+                onChange = delegate (SettingsMode value) {
+                    if (value == SettingsMode.Tampered)
+                    {
+                        configTournament.Value = SettingsMode.Casual;
+                        return false;
+                    }
+                    return true;
+                },
+                onDisplayEnumText = delegate (SettingsMode value)
+                {
+                    return I.Xlat($"enemydifficultymod_settings_{value}");
+                }
             };
 
-            ConfigFreeText resetDefault = new ConfigFreeText("none", Config, "enemydifficultymod_reset");
-            resetDefault.TextAlign = TextAlign.Right;
-            resetDefault.Clicked += delegate (ConfigEntryBase _, CustomButton _)
+            ConfigFreeText resetDefault = new ConfigFreeText("none", Config, "enemydifficultymod_reset", "enemydifficultymod_reset_tooltip")
             {
+                TextAlign = TextAlign.Right
+            };
+            resetDefault.Clicked += delegate (ConfigEntryBase _, CustomButton _) {
                 configStrength?.SetDefaults();
                 configTournament?.SetDefaults();
+            };
+
+            clearCurrentSave = new ConfigFreeText("clear", Config, "enemydifficultymod_clearsave", "enemydifficultymod_clearsave_tooltip") {
+                TextAlign = TextAlign.Left,
+                OnUI = delegate(ConfigFreeText ccs, CustomButton _)
+                {
+                    ccs.Text = SaveHelper.DescribeCurrentSave();
+                }
+            };
+            clearCurrentSave.Clicked += delegate (ConfigEntryBase _, CustomButton _) {
+                SaveHelper.ClearCurrentSave();
+                clearCurrentSave.UI.NameTerm = "enemydifficultymod_savecleared";
             };
             Config.OnSave = delegate ()
             {
@@ -67,8 +98,7 @@ namespace EnemyDifficultyModNS
 
         private void ApplyConfig()
         {
-            ApplyStrengthMultiplier();
-            StrModIsLocked = SaveLockStatus == SaveLockStatus.Broken || (configTournament?.Value ?? false);
+            ApplyStrengthMultiplier(SettingsMode == SettingsMode.Disabled ? 100 : StrengthPercentage);
         }
 
         public override void Ready()
@@ -77,58 +107,16 @@ namespace EnemyDifficultyModNS
             Log("Ready!");
         }
 
-        public void WM_OnSave(WorldManager wm, SaveRound saveRound)
-        {
-            string value = !StrModIsLocked || SaveLockStatus == SaveLockStatus.Nolock ? "NOLOCK" :
-                           SaveLockStatus == SaveLockStatus.Broken ? "BROKEN" : $"{StrengthPercentage}";
-            Log($"SaveConfig - {value}");
-            saveRound.ExtraKeyValues.SetOrAdd("enemydifficultymod_lock", value);
-        }
-
-        public void WM_OnLoad(WorldManager wm, SaveRound saveRound)
-        {
-            ApplyConfig();
-            string value = saveRound.ExtraKeyValues.Find(x => x.Key == "enemydifficultymod_lock")?.Value;
-            if (value == null)
-            {
-                Log("LoadConfig - value was null");
-                StrModIsLocked = SaveLockStatus != SaveLockStatus.Broken && configTournament.Value;
-                SaveLockStatus = SaveLockStatus == SaveLockStatus.Broken ? SaveLockStatus.Broken : configTournament.Value ? SaveLockStatus.Locked : SaveLockStatus.Nolock;
-                return;
-            }
-
-            Log($"LoadConfig - {value}");
-            if (value == "BROKEN")
-            {
-                StrModIsLocked = true;
-                SaveLockStatus = SaveLockStatus.Broken;
-            }
-            else if (value == "NOLOCK")
-            {
-                StrModIsLocked = false;
-                SaveLockStatus = SaveLockStatus.Nolock;
-            }
-            else if (Int32.TryParse(value, out int strength))
-            {
-                StrModIsLocked = true;
-                SaveLockStatus = SaveLockStatus.Locked;
-                EmemySpawning_Patch.SpawnMultiplier = StrengthModifer = Math.Clamp(strength, 50f, 300f) / 100f; // override config
-            }
-            else
-            {
-                StrModIsLocked = true;
-                SaveLockStatus = SaveLockStatus.Broken;
-            }
-            instance.Notification();
-        }
-
         public void Notification()
         {
-            I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
-                                 I.Xlat(StrModIsLocked ? "enemydifficultymod_strengthlocked" : "enemydifficultymod_strength") +
-                                 ": " + ConfigEntryHelper.ColorText(Color.blue, $"{EmemySpawning_Patch.SpawnMultiplier * 100}%"));
+            if (SettingsMode != SettingsMode.Disabled)
+            {
+                I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
+                                     I.Xlat($"enemydifficultymod_strength_{SettingsMode}") +
+                                     ": " + ConfigEntryHelper.ColorText(Color.blue, $"{StrengthModifier * 100}%"));
+            }
         }
-   }
+    }
 }
 
 #if false

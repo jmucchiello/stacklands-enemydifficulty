@@ -1,9 +1,23 @@
 Term	Notes	English
 enemydifficultymod_strength		Enemy Health Modifier
-enemydifficultymod_strengthlocked		Enemy Health Modifer (Locked)
+enemydifficultymod_strength_Casual		Enemy Health Modifer (From Mod Options)
+enemydifficultymod_strength_Tournament		Enemy Health Modifer (Tournament Mode)
+enemydifficultymod_strength_Tampered		Enemy Health Modifer (From Mod Options, Save File Broken)
 enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
-enemydifficultymod_reset		Reset Defaults
-enemydifficultymod_notify		Enemy Difficulty Mod
-enemydifficultymod_savetitle		Enemy Difficulty Mod
 enemydifficultymod_tournament		Tournament Mode
-enemydifficultymod_tournament_tooltip		Applies only to new games, when enabled and a new game Run is started,#the setting for the Enemy Health Modifier is stored in the save file.#When that game is played, the setting in the Mod Option screen is ignored#and the value stored in the save file is used.
+enemydifficultymod_settings_Casual		#Casual. Take modifier from Mod Options. (see above)
+enemydifficultymod_settings_Tournament		#Tournament. Take modifier from save file. Save current setting to new runs.
+enemydifficultymod_settings_Disabled		#Disabled. Mod is not active for this save file. Enemy strength is always 100%. (Does not disable existing save files with modifiers in them.)
+enemydifficultymod_settings_Tampered		#Casual. Take settings from Mod Options (see above)
+enemydifficultymod_tournament_tooltip		Applies only to new games, when enabled and a new game Run is started,#the setting for the Enemy Health Modifier is stored in the save file.#When that game is played, the setting in the Mod Option screen is ignored#and the value stored in the save file is used. All save file settings#are reset when you start a new run.##If not disabled, a notification will say "Tournament Mode" when the#modifier is taken from the save file. Otherwise the notification will#say "From Mod Options".
+enemydifficultymod_reset		Reset Defaults
+enemydifficultymod_reset_tooltip		Reset the options here to their default values
+enemydifficultymod_notify		Enemy Difficulty Mod
+enemydifficultymod_clearsave_text		Save file updated.
+enemydifficultymod_clearsave		Click here to remove mod options from current save file.
+enemydifficultymod_savecleared		Current save file is set to: 
+enemydifficultymod_descript_nosave		Current save has no data from this mod or there is no current save.
+enemydifficultymod_descript_casual		Current save uses mod options value.
+enemydifficultymod_descript_broken		Current save uses mod options value due to bad formatting of the save data in the file.
+enemydifficultymod_descript_disabled		Current save disables this mod.
+enemydifficultymod_descript_tournament		Current save is in tournament mode with modifier set to [percentage]%

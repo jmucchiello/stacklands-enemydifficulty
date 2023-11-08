@@ -1,15 +1,14 @@
 ﻿using CommonModNS;
 using HarmonyLib;
 using UnityEngine;
-using System.Reflection.Emit;
 
 namespace EnemyDifficultyModNS
 {
     public partial class EnemyDifficultyMod : Mod
     {
-        public void ApplyStrengthMultiplier()
+        public void ApplyStrengthMultiplier(int percentage)
         {
-            EmemySpawning_Patch.SpawnMultiplier = StrengthModifer = (float)StrengthPercentage / 100f;
+            EmemySpawning_Patch.SpawnMultiplier = Math.Clamp(percentage, 50f, 300f) / 100f;
             Log($"Spawned Enemies Strength Multiplier: {EmemySpawning_Patch.SpawnMultiplier}");
         }
     }
@@ -22,10 +21,10 @@ namespace EnemyDifficultyModNS
 
         static void Prefix(List<CardIdWithEquipment> __result, List<SetCardBagType> cardbags, ref float strength, bool canHaveInventory)
         {
-            string s = String.Join(",", cardbags.ToArray());
-            float originalStrength = strength;
+            //string s = String.Join(",", cardbags.ToArray());
+            //float originalStrength = strength;
             strength *= SpawnMultiplier;
-//            EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
+            //EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
         }
     }
 
@@ -33,7 +32,14 @@ namespace EnemyDifficultyModNS
     [HarmonyPatch(new Type[] { typeof(Vector3), typeof(CardData), typeof(bool), typeof(bool), typeof(bool), typeof(bool) })]
     public class WMCreateCard_Patch
     {
-        public static Traverse<bool> WM_IsLoadingSaveRound;
+        private static Traverse<bool> WM_IsLoadingSaveRound = null;
+
+        public static void Setup()
+        {
+            if (WM_IsLoadingSaveRound == null)
+                WM_IsLoadingSaveRound = new Traverse(I.WM).Field<bool>("IsLoadingSaveRound");
+        }
+
         static void Postfix(WorldManager __instance, CardData __result) //, ref Vector3 position)
         {
             bool loading = WM_IsLoadingSaveRound?.Value ?? true;
