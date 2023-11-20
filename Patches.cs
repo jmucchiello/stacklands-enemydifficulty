@@ -21,10 +21,7 @@ namespace EnemyDifficultyModNS
 
         static void Prefix(List<CardIdWithEquipment> __result, List<SetCardBagType> cardbags, ref float strength, bool canHaveInventory)
         {
-            //string s = String.Join(",", cardbags.ToArray());
-            //float originalStrength = strength;
             strength *= SpawnMultiplier;
-            //EnemyDifficultyMod.Log($"SpawnHelper.GetEnemiesToSpawn - {originalStrength:F02} modified strength {strength:F02} {SpawnMultiplier}");
         }
     }
 
@@ -34,10 +31,10 @@ namespace EnemyDifficultyModNS
     {
         private static Traverse<bool> WM_IsLoadingSaveRound = null;
 
-        public static void Setup()
+        public static void Setup(WorldManager wm)
         {
             if (WM_IsLoadingSaveRound == null)
-                WM_IsLoadingSaveRound = new Traverse(I.WM).Field<bool>("IsLoadingSaveRound");
+                WM_IsLoadingSaveRound = new Traverse(wm).Field<bool>("IsLoadingSaveRound");
         }
 
         static void Postfix(WorldManager __instance, CardData __result) //, ref Vector3 position)
@@ -50,23 +47,4 @@ namespace EnemyDifficultyModNS
             }
         }
     }
-
-#if false
-    [HarmonyPatch(typeof(Crab),nameof(Crab.Die))]
-    internal class MommaCrab_Patch
-    {
-        public static int MommaCrabFrequency = 3;
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> result = new CodeMatcher(instructions)
-                .MatchStartForward(
-                    new CodeMatch(OpCodes.Ldc_I4_3)
-                )
-                .Set(OpCodes.Ldsfld, AccessTools.Field(typeof(MommaCrab_Patch), "MommaCrabFrequency"))
-                .InstructionEnumeration()
-                .ToList();
-            return result;
-        }
-    }
-#endif
 }

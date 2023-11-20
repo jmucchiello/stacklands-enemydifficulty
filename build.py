@@ -8,7 +8,7 @@ import json
 
 # ----- CONFIGURE THESE -----
 SYNC_FOLDERS = ["Blueprints", "Boosterpacks", "Cards", "Icons", "Sounds"] # folders to be synced, such as Cards, Blueprints, Icons, etc.
-COPY_FILES = ["manifest.json", "localization.tsv", "workfile.txt", "icon.png"] # individual files to copy, such as manifest.json, localization.tsv, etc. (the mod dll is copied automatically)
+COPY_FILES = ["manifest.json", "*.tsv", "workfile.txt", "icon.png"] # individual files to copy, such as manifest.json, localization.tsv, etc. (the mod dll is copied automatically)
 MODS_ROOT = Path(os.environ["userprofile"]) / Path("AppData/LocalLow/sokpop/Stacklands/Mods") # windows only, can be hardcoded with the below line instead
 # MODS_ROOT = Path("C:/Users/cyber/AppData/LocalLow/sokpop/Stacklands/Mods").resolve()
 
@@ -62,10 +62,11 @@ shutil.copyfile(MOD_DLL, MOD_PATH / f"{DLL_NAME}")
 
 # copy files
 for file in COPY_FILES:
-    try:
-        shutil.copyfile(file, MOD_PATH / file)
-    except FileNotFoundError:
-        print(f"No such file: '{file}'")
+    for f in Path(".").glob(file):
+        try:
+            shutil.copyfile(f, MOD_PATH / f)
+        except FileNotFoundError:
+            print(f"No such file: '{f}'")
 
 # copy folders
 print("syncing folders..")

@@ -1,187 +1,163 @@
-﻿using CommonModNS;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace EnemyDifficultyModNS
+namespace CommonModNS
 {
-    public partial class EnemyDifficultyMod : Mod
+    public enum SaveSettingsMode { Tournament, Casual, Disabled, Tampered }
+
+    internal struct SecretData
     {
-        private void WM_OnNewRound(WorldManager wm)
+        private readonly int savedCards;
+        private readonly int month;
+        private readonly float monthTimer;
+        public SecretData(SaveRound saveRound)
         {
-            SettingsMode = TournamentMode;// ? SettingsMode.Tournament : SettingsMode.Casual;
-            StrengthModifier = (float)StrengthPercentage / 100f;
+            savedCards = saveRound.SavedCards.Count;
+            month = saveRound.BoardMonths.MainMonth;
+            monthTimer = saveRound.MonthTimer;
         }
 
-        private void WM_OnSave(WorldManager wm, SaveRound saveRound)
+        public readonly string RawString()
         {
-            SaveHelper.SaveData(saveRound, (int)(StrengthModifier * 100f), SettingsMode);
-        }
-
-        private void WM_OnLoad(WorldManager wm, SaveRound saveRound)
-        {
-            ApplyConfig();
-            (SettingsMode, int percentage) = SaveHelper.LoadData(saveRound);
-            if (SettingsMode == SettingsMode.Tournament)
-            {
-                ApplyStrengthMultiplier(percentage);
-            }
-        }
-
-        private void WM_OnPlay(WorldManager wm)
-        {
-            Notification();
+            List<string> strings = new List<string>();
+            strings.Add(savedCards.ToString());
+            strings.Add(month.ToString());
+            strings.Add(monthTimer.ToString());
+            return String.Join(" ", strings);
         }
     }
 
-
-    public enum ChallengeStatus { ENABLED, DISABLED, BROKEN }
-    public interface IChallengeMod
+    public class SaveHelper
     {
-        string Challenge_ModId { get; }
-        string Challenge_SaveData_Immutable { get; }
-
-        void Challenge_OnPlay(ChallengeStatus status);
-
-        void Challenge_OnUI(Transform parent);
-        void Challenge_OnUISave();
-    }
-
-    public class ChallengeManager
-    {
-        List<IChallengeMod> mods;
-
-
-    }
-
-    public static class SaveHelper
-    {
-        private static readonly string saveRoundKey = "enemydifficultymod_mode";
-        private static readonly string oldSaveRoundKey = "enemydifficultymod_lock";
+        private readonly string saveRoundKey;
+        private readonly string oldSaveRoundKey = null;
+        private readonly string salt;
 
         private static readonly string SettingsStatus_casual = "CASUAL";
         private static readonly string SettingsStatus_broken = "BROKEN";
         private static readonly string SettingsStatus_disabled = "DISABLED";
 
-        private static readonly string salt = Environment.MachineName + "?enemystrength";
-//        private static SettingsMode SettingsMode { get => EnemyDifficultyMod.SettingsMode; set => EnemyDifficultyMod.SettingsMode = value; }
+        public delegate string OnGetSettings();
+        public OnGetSettings onGetSettings;
 
-        internal struct SecretData
+        public SaveHelper(string modName)
         {
-            public int savedCards;
-            public int month;
-            public float monthTimer;
-            public SecretData(SaveRound saveRound)
+            saveRoundKey = modName + "_save";
+            salt = (Environment.MachineName ?? "") + "?" + modName;
+        }
+
+        public void Ready(string path)
+        {
+            string locPath = Path.Combine(path, "savehelper.tsv");
+            if (File.Exists(locPath))
             {
-                savedCards = saveRound.SavedCards.Count;
-                month = saveRound.BoardMonths.MainMonth;
-                monthTimer = saveRound.MonthTimer;
+                SokLoc.instance.LoadTermsFromFile(locPath);
             }
         }
-
-        private static string Construct(SecretData secrets, int value)
+        private string Construct(SecretData secrets, string payload)
         {
-            string percent = value.ToString();
             List<string> strings = new List<string>();
-            strings.Add(secrets.savedCards.ToString());
-            strings.Add(secrets.month.ToString());
-            strings.Add(secrets.monthTimer.ToString());
-            strings.Add(percent);
-            string x = String.Join(" ", strings) + " ";
-            return (salt + ":" + x).GetHashCode().ToString() + ":" + percent;
+            strings.Add(secrets.RawString());
+            if (payload != null) strings.Add(payload);
+            string hashSource = String.Join(" ", strings);
+            string result = (salt + ":" + hashSource).GetHashCode().ToString();
+            if (payload != null) result += ":" + payload;
+            return result;
         }
 
-        private static (SettingsMode mode, int) Interpret(string hash, SecretData secrets)
+        private (SaveSettingsMode mode, string) Interpret(string hash, SecretData secrets)
         {
-            SettingsMode SettingsMode = SettingsMode.Casual;
-            int percentage = 100;
+            SaveSettingsMode SettingsMode = SaveSettingsMode.Casual;
 
             int pos = hash.IndexOf(":");
             string payload = hash.Substring(pos + 1);
             if (payload == SettingsStatus_disabled)
             {
-                SettingsMode = SettingsMode.Disabled;
+                SettingsMode = SaveSettingsMode.Disabled;
                 I.Log("LoadData - succeeded - mod is disabled.");
             }
             else if (payload == SettingsStatus_casual)
             {
-                SettingsMode = SettingsMode.Casual;
+                SettingsMode = SaveSettingsMode.Casual;
                 I.Log("LoadData - succeeded - No value stored in save data, using mod options value.");
             }
             else if (payload == SettingsStatus_broken || pos < 0)
             {
-                SettingsMode = SettingsMode.Tampered;
+                SettingsMode = SaveSettingsMode.Tampered;
                 I.Log("LoadData - succeeded - save files has already been reported broken.");
             }
-            else if (!Int32.TryParse(payload, out percentage))
+            else if (hash != Construct(secrets, onGetSettings?.Invoke()))
             {
-                SettingsMode = SettingsMode.Tampered;
-                I.Log("LoadData - failed - payload is not a percent value.");
-            }
-            else if (hash != Construct(secrets, percentage))
-            {
-                SettingsMode = SettingsMode.Tampered;
+                SettingsMode = SaveSettingsMode.Tampered;
                 I.Log("LoadData - failed - hashes do not match.");
             }
             else
             {
-                SettingsMode = SettingsMode.Tournament;
-                I.Log($"LoadData - succeeded - enemy strength modifier={percentage}");
+                SettingsMode = SaveSettingsMode.Tournament;
+                I.Log($"LoadData - succeeded - {payload}");
             }
-            return (SettingsMode, percentage);
+            return (SettingsMode, payload);
         }
 
-        public static void SaveData(SaveRound saveRound, int value, SettingsMode SettingsMode)
+        public void SaveData(SaveRound saveRound, SaveSettingsMode SettingsMode)
         {
+            SecretData secret = new SecretData(saveRound);
             string payload = SettingsMode switch
             {
-                SettingsMode.Casual => SettingsStatus_casual,
-                SettingsMode.Disabled => SettingsStatus_disabled,
-                SettingsMode.Tampered => SettingsStatus_broken,
-                _ => Construct(new SecretData(saveRound), value)
+                SaveSettingsMode.Casual => SettingsStatus_casual,
+                SaveSettingsMode.Disabled => Construct(secret, SettingsStatus_disabled),
+                SaveSettingsMode.Tournament => Construct(secret, onGetSettings?.Invoke()),
+                _ => SettingsStatus_broken,
             };
 
             I.Log($"SaveData - {payload}");
             saveRound.ExtraKeyValues.SetOrAdd(saveRoundKey, payload);
         }
 
-        public static (SettingsMode, int) LoadData(SaveRound saveRound)
+        public (SaveSettingsMode, string) LoadData(SaveRound saveRound)
         {
             string hash = saveRound.ExtraKeyValues.Find(x => x.Key == saveRoundKey)?.Value;
             if (hash == null)
             {
-                hash = saveRound.ExtraKeyValues.Find(x => x.Key == oldSaveRoundKey)?.Value;
+                if (oldSaveRoundKey != null)
+                {
+                    hash = saveRound.ExtraKeyValues.Find(x => x.Key == oldSaveRoundKey)?.Value;
+                }
                 if (hash == null)
                 {
                     I.Log("LoadData - value was null");
-                    return (SettingsMode.Casual, 100);
+                    return (SaveSettingsMode.Casual, null);
                 }
-                return (SettingsMode.Casual, 100);
             }
             return Interpret(hash, new SecretData(saveRound));
         }
 
-        public static void ClearCurrentSave()
+        public void ClearCurrentSave()
         {
-            SaveGame game = I.WM.CurrentSave;
-            game.ExtraKeyValues.SetOrAdd(saveRoundKey, SettingsStatus_casual);
-            EnemyDifficultyMod.instance.clearCurrentSave.Update();
-//            I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"), I.Xlat("enemydifficultymod_clearsave_text"));
+            SaveRound round = I.WM.CurrentSave.LastPlayedRound;
+            int at = round.ExtraKeyValues.FindIndex(x => x.Key == saveRoundKey);
+            if (at >= 0) round.ExtraKeyValues.RemoveAt(at);
         }
 
-        public static string DescribeCurrentSave()
+        public string DescribeCurrentSave()
         {
-            SaveGame game = I.WM.CurrentSave;
-            string hash = game.ExtraKeyValues.Find(x => x.Key == saveRoundKey)?.Value;
-            if (hash == null || game.LastPlayedRound == null)
+            SaveRound round = I.WM.CurrentSave.LastPlayedRound;
+            string hash = round?.ExtraKeyValues.Find(x => x.Key == saveRoundKey)?.Value;
+            if (round != null) foreach (var x in round.ExtraKeyValues)
             {
-                return I.Xlat("enemydifficultymod_descript_nosave");
+                I.Log($"key {x.Key} value {x.Value}");
             }
-            (SettingsMode mode, int percentage) = Interpret(hash, new SecretData(game.LastPlayedRound));
+            I.Log($"game {round} saveRoundKey {saveRoundKey} hash {hash}");
+            if (hash == null || round == null)
+            {
+                return I.Xlat("savehelper_descript_nosave");
+            }
+            (SaveSettingsMode mode, string payload) = Interpret(hash, new SecretData(round));
             return mode switch
             {
-                SettingsMode.Casual => I.Xlat("enemydifficultymod_descript_casual"),
-                SettingsMode.Disabled => I.Xlat("enemydifficultymod_descript_disabled"),
-                SettingsMode.Tampered => I.Xlat("enemydifficultymod_descript_broken"),
-                _ => I.Xlat("enemydifficultymod_descript_broken", LocParam.Create("percentage", percentage.ToString()))
+                SaveSettingsMode.Casual => I.Xlat("savehelper_descript_casual"),
+                SaveSettingsMode.Disabled => I.Xlat("savehelper_descript_disabled"),
+                SaveSettingsMode.Tampered => I.Xlat("savehelper_descript_broken"),
+                _ => I.Xlat("savehelper_descript_tournament", LocParam.Create("percentage", payload))
             };
         }
     }
