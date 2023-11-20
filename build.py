@@ -7,13 +7,13 @@ from pathlib import Path
 import json
 
 # ----- CONFIGURE THESE -----
+COMMON = ["savehelper.tsv"]
 SYNC_FOLDERS = ["Blueprints", "Boosterpacks", "Cards", "Icons", "Sounds"] # folders to be synced, such as Cards, Blueprints, Icons, etc.
 COPY_FILES = ["manifest.json", "*.tsv", "workfile.txt", "icon.png"] # individual files to copy, such as manifest.json, localization.tsv, etc. (the mod dll is copied automatically)
 MODS_ROOT = Path(os.environ["userprofile"]) / Path("AppData/LocalLow/sokpop/Stacklands/Mods") # windows only, can be hardcoded with the below line instead
 # MODS_ROOT = Path("C:/Users/cyber/AppData/LocalLow/sokpop/Stacklands/Mods").resolve()
 
 MOD_BIN = Path("./bin/Debug/netstandard2.1").resolve()
-
 
 def sync_folder(src: Path, dst: Path):
     for file in dst.glob("**/*"):
@@ -60,6 +60,9 @@ if DLL_NAME.lower() == "examplemod.dll":
 MOD_PATH.mkdir(exist_ok=True)
 shutil.copyfile(MOD_DLL, MOD_PATH / f"{DLL_NAME}")
 
+for file in COMMON:
+    shutil.copyfile(f"../stacklands-common/{file}", f"./{file}")
+
 # copy files
 for file in COPY_FILES:
     for f in Path(".").glob(file):
@@ -67,6 +70,9 @@ for file in COPY_FILES:
             shutil.copyfile(f, MOD_PATH / f)
         except FileNotFoundError:
             print(f"No such file: '{f}'")
+
+for file in COMMON:
+    os.remove(f"./{file}")
 
 # copy folders
 print("syncing folders..")

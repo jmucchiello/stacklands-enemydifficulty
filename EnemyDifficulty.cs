@@ -17,8 +17,8 @@ namespace EnemyDifficultyModNS
         private void Awake()
         {
             instance = this;
-            SetupConfig();  // Settings.cs
             SavePatches();  // here
+            SetupConfig();  // Settings.cs
             WMCreateCard_Patch.Setup(I.WM);  // Patches.cs
             Harmony.PatchAll();
         }

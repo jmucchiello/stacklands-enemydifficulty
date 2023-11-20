@@ -3,7 +3,7 @@ This mod allows you to modify the relative strength of all enemies in the game f
 300% is rather brutal. If you make it far with that setting, bravo!
 
 The Tournament Mode setting in the Mod's Options screen causes the strength setting to be saved to the save file, if enabled.
-Once saved to the game file, the setting in the Options screen is ignored when playing this save file until the save file is restarted.
+Once saved to the game file, the setting in the Options screen is ignored when playing this save file until a new run is started on the save file.
 
 # ChangeLog
 1.0.0 Release

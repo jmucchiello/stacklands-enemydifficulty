@@ -1,6 +1,0 @@
-Term	Notes	English
-savehelper_descript_nosave		Current save has no data from this mod or there is no current save.
-savehelper_descript_casual		Current save uses the setting above.
-savehelper_descript_broken		Current save uses the setting above due to bad formatting of the save data in the file.
-savehelper_descript_disabled		Current save disables this mod. Enemy Strength Modifier is 100% for this save.
-savehelper_descript_tournament		Current save is in tournament mode with Enemy Strength Modifier set to [percentage]%.

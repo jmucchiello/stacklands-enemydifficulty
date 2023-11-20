@@ -4,17 +4,5 @@ enemydifficultymod_strength_Casual		Enemy Health Modifer (From Mod Options)
 enemydifficultymod_strength_Tournament		Enemy Health Modifer (Tournament Mode)
 enemydifficultymod_strength_Tampered		Enemy Health Modifer (From Mod Options, Save File Broken)
 enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
-enemydifficultymod_settings_Casual		<size=25>Casual</size>
-enemydifficultymod_settings_Tournament		<size=25>Tournament</size>
-enemydifficultymod_settings_Disabled		<size=25>Disabled</size>
-enemydifficultymod_settings_Tampered		<size=25>Casual</size>
-enemydifficultymod_reset		Reset Defaults
-enemydifficultymod_reset_tooltip		Reset the options here to their default values
 enemydifficultymod_notify		Enemy Difficulty Mod
 enemydifficultymod_clearsave_text		Save file updated.
-enemydifficultymod_clearsave		Click here to remove mod options from current save file.
-enemydifficultymod_savecleared		Current save file is set to: 
-enemydifficultymod_modal_title		Clear Current Save
-enemydifficultymod_modal_text		Are you sure you want to remove this Mod's option data from the current save file?
-enemydifficultymod_tournament		New Save Mode
-enemydifficultymod_tournament_tooltip		<b><i>When a new game is created</i></b>, New Save Mode determines if MOD Options are written#to the save file. Existing games containing no save data are treated as <b>Casual</b> games.##<b>Tournament</b> (or On) writes the MOD Options to the save file. <b>Tournament</b> save#     files ignore the <b>Disabled</b> setting.#<b>Casual</b> (or Off) does not write to the save file at all. The MOD Options can be changed#     between gaming sessions. <b>Casual</b> save files are affected by the <b>Disabled</b> option.#<b>Disabled</b> writes the default settings to the save file and uses them in lieu of the#     current MOD Options.
