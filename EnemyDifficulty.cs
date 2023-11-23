@@ -30,16 +30,6 @@ namespace EnemyDifficultyModNS
             Log("Ready!");
         }
 
-        public void Notification()
-        {
-            if (SaveMode != SaveSettingsMode.Disabled)
-            {
-                I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
-                                     I.Xlat($"enemydifficultymod_strength_{SaveMode}") +
-                                     ": " + ConfigEntryHelper.ColorText(Color.blue, $"{StrengthModifier}%"));
-            }
-        }
-
         private SaveHelper saveHelper;
 
         private void SavePatches()
@@ -93,49 +83,15 @@ namespace EnemyDifficultyModNS
         {
             Notification();
         }
+
+        public void Notification()
+        {
+            if (SaveMode != SaveSettingsMode.Disabled)
+            {
+                I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
+                                     I.Xlat($"enemydifficultymod_strength_{SaveMode}") +
+                                     ": " + ConfigEntryHelper.ColorText(Color.blue, $"{StrengthModifier}%"));
+            }
+        }
     }
 }
-
-#if false
-        private void Fun()
-        {
-            Transform tb = GameCanvas.instance.transform.Find("ModDisablingScreen/Background/Scroll View/Viewport/Content/Buttons");
-            for (int i = 0; i < tb.childCount; ++i) 
-            {
-                CustomButton cb = tb.GetChild(i).GetComponent<CustomButton>();
-                if (cb.TextMeshPro.text.Contains("BetterSaves"))
-                {
-                    cb.TooltipText = "Hey, just so you're aware, if you disable Better Saves, you won't be able to access some of your saves.";
-                }
-            }
-        }
-
-
-        public static IEnumerator CutSceneLockStrength()
-        {
-            GameCanvas.instance.SetScreen<CutsceneScreen>();
-            Cutscenes.Title = I.Xlat("enemydifficultymod_locktitle");
-            Cutscenes.Text = I.Xlat("enemydifficultymod_locktext", LocParam.Create("amount", StrengthPercentage.ToString()));
-            yield return Cutscenes.WaitForAnswer(I.Xlat("enemydifficultymod_lock"),
-                                                 I.Xlat("enemydifficultymod_nolock"),
-                                                 I.Xlat("enemydifficultymod_defer"));
-            if (I.WM.ContinueButtonIndex == 0)
-            {
-                SaveLockStatus = SaveLockStatus.Locked;
-            }
-            else if (I.WM.ContinueButtonIndex == 1)
-            {
-                SaveLockStatus = SaveLockStatus.Nolock;
-            }
-            else if (I.WM.ContinueButtonIndex == 2)
-            {
-                SaveLockStatus = SaveLockStatus.Deferred;
-            }
-            instance.Notification();
-
-            Cutscenes.Text = "";
-            Cutscenes.Title = "";
-            GameCanvas.instance.SetScreen<GameScreen>();
-            I.WM.currentAnimation = null;
-        }
-#endif

@@ -1,8 +1,7 @@
 Term	Notes	English
+enemydifficultymod_notify		Enemy Difficulty Mod
 enemydifficultymod_strength		Enemy Health Modifier
+enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
 enemydifficultymod_strength_Casual		Enemy Health Modifer (From Mod Options)
 enemydifficultymod_strength_Tournament		Enemy Health Modifer (Tournament Mode)
 enemydifficultymod_strength_Tampered		Enemy Health Modifer (From Mod Options, Save File Broken)
-enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
-enemydifficultymod_notify		Enemy Difficulty Mod
-enemydifficultymod_clearsave_text		Save file updated.

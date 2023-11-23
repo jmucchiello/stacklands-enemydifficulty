@@ -14,15 +14,11 @@ namespace EnemyDifficultyModNS
 
         private ConfigSlider configStrength;
         private ConfigTournament configTournament;
-        public ConfigClearSave clearCurrentSave;
+        //private ConfigClearSave clearCurrentSave;
 
         private void SetupConfig()
         {
-//            ConfigFreeText freeText = new ConfigFreeText("none", Config, "enemydifficultymod_strength", "enemydifficultymod_strength_tooltip")
-//            {
-//                TextAlign = TextAlign.Center
-//            };
-            configStrength = new ConfigSlider("enemydifficultymod_strength", Config, OnChangeStrength, 50, 300, 5, 100)
+            configStrength = new ConfigSlider("enemydifficultymod_strength", Config, 50, 300, 5, 100)
             {
                 currentValueColor = Color.blue,
                 HeadingTerm = "enemydifficultymod_strength",
@@ -42,7 +38,7 @@ namespace EnemyDifficultyModNS
                 configTournament?.SetDefaults();
             });
 
-            clearCurrentSave = new ConfigClearSave(saveHelper, Config);
+            _ = new ConfigClearSave(saveHelper, Config);
 
             Config.OnSave = delegate ()
             {
@@ -55,7 +51,5 @@ namespace EnemyDifficultyModNS
         {
             ApplyStrengthMultiplier(InternalPercentage);
         }
-
-        private void OnChangeStrength(int value) { }
     }
 }
