@@ -78,4 +78,3 @@ for file in COMMON:
 print("syncing folders..")
 for folder in SYNC_FOLDERS:
     sync_folder(Path(folder), MOD_PATH / folder)
-

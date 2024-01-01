@@ -19,8 +19,25 @@ namespace EnemyDifficultyModNS
             instance = this;
             SavePatches();  // here
             SetupConfig();  // Settings.cs
+            SetupRunopts(); // Runopts.cs
             WMCreateCard_Patch.Setup(I.WM);  // Patches.cs
             Harmony.PatchAll();
+        }
+
+        RunoptsSlider runoptsDifficulty;
+        
+        private void SetupRunopts()
+        {
+            runoptsDifficulty = new RunoptsSlider("enemydifficultymod_difficulty", 100, 50, 300, 5)
+            {
+                NameTerm = "enemydifficultymod_runopts",
+                TooltipTerm = "enemydifficultymod_strength_tooltip",
+                FontColor = Color.blue,
+                FontSize = 20,
+                Value = configStrength.Value
+            };
+
+            HookRunOptions.ApplyPatch(Harmony);
         }
 
         public override void Ready()

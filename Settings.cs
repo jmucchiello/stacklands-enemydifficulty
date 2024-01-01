@@ -10,10 +10,14 @@ namespace EnemyDifficultyModNS
         public static int StrengthModifier { get => (int)((EmemySpawning_Patch.SpawnMultiplier + 1f/200f) * 100f); }  // use this when dealing with what is "current" or in the save files
         public static int StrengthPercentage { get => instance?.configStrength?.Value ?? 100; } // always the value from Mod Options Screen
         public static SaveSettingsMode SaveMode { get; set; } = SaveSettingsMode.Casual;
+        public static bool ForestMoreDangerous { get => instance?.configForestWaves?.Value ?? false; }
+        public static bool WitchMoreDangerous { get => instance?.configWitchRespawnEnabled?.Value ?? false; }
+
         private static int InternalPercentage { get; set; }
 
         private ConfigSlider configStrength;
-        private ConfigTournament configTournament;
+        private ConfigEntryBool configForestWaves;
+        private ConfigEntryBool configWitchRespawnEnabled;
         //private ConfigClearSave clearCurrentSave;
 
         private void SetupConfig()
@@ -31,7 +35,18 @@ namespace EnemyDifficultyModNS
             };
             configStrength.QuickButtons.AddRange(new List<string> { "75%", "100%", "125%", "150%", "200%" });
 
-            configTournament = new ConfigTournament("enemydifficultymod_tournament", Config);
+            configForestWaves = new ConfigEntryBool("enemydifficultymod_forest", Config, false, new ConfigUI()
+            {
+                NameTerm = "enemydifficultymod_forest",
+                TooltipTerm = "enemydifficultymod_forest_tooltip"
+            });
+
+            configWitchRespawnEnabled = new ConfigEntryBool("enemydifficultymod_witch", Config, false, new ConfigUI() {
+                NameTerm = "enemydifficultymod_witch",
+                TooltipTerm = "enemydifficultymod_witch_tooltip"
+            });
+
+
 
             ConfigResetDefaults resetDefault = new ConfigResetDefaults(Config, () => {
                 configStrength?.SetDefaults();

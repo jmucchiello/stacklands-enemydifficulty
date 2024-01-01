@@ -22,8 +22,13 @@
     <Compile Include="..\stacklands-common\ConfigSlider.cs" Link="Common\ConfigSlider.cs" />
     <Compile Include="..\stacklands-common\ConfigToggledEnum.cs" Link="Common\ConfigToggledEnum.cs" />
     <Compile Include="..\stacklands-common\Instances.cs" Link="Common\Instances.cs" />
+    <Compile Include="..\stacklands-common\RunoptsEnum.cs" Link="Common\RunoptsEnum.cs" />
     <Compile Include="..\stacklands-common\SaveHelper.cs" Link="Common\SaveHelper.cs" />
     <Compile Include="..\stacklands-common\WorldManagerPatches.cs" Link="Common\WorldManagerPatches.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\stacklands-common\CommonNS.tsv" Link="Common\CommonNS.tsv" />
   </ItemGroup>
 
   <ItemGroup>

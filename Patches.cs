@@ -21,7 +21,14 @@ namespace EnemyDifficultyModNS
 
         static void Prefix(List<CardIdWithEquipment> __result, List<SetCardBagType> cardbags, ref float strength, bool canHaveInventory)
         {
-            strength *= SpawnMultiplier;
+            if (ForestCombatManager_SpawnWave.inForest)
+            {
+                strength = ForestCombatManager_SpawnWave.strength * SpawnMultiplier;
+            }
+            else
+            {
+                strength *= SpawnMultiplier;
+            }
         }
     }
 
@@ -42,8 +49,40 @@ namespace EnemyDifficultyModNS
             bool loading = WM_IsLoadingSaveRound?.Value ?? true;
             if (!loading && __result is Combatable c && __result is not BaseVillager)
             {
+                if (__result.Id == Cards.wicked_witch && ForestCombatManager_SpawnWave.inForest && EnemyDifficultyMod.WitchMoreDangerous)
+                {
+                    c.BaseCombatStats.MaxHealth *= ForestCombatManager_SpawnWave.wave / 10;
+                }
                 c.BaseCombatStats.MaxHealth = (int)(c.BaseCombatStats.MaxHealth * EmemySpawning_Patch.SpawnMultiplier);
                 c.HealthPoints = c.ProcessedCombatStats.MaxHealth;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(ForestCombatManager),"SpawnWave")]
+    public class ForestCombatManager_SpawnWave
+    {
+        public static bool inForest = false;
+        public static float strength = 0f;
+        public static int wave = 0;
+
+        static void Prefix(ForestCombatManager __instance, int wave_)
+        {
+            inForest = EnemyDifficultyMod.ForestMoreDangerous;
+            strength = 10 * wave_ + 10;
+            wave = wave_;
+        }
+    }
+
+    [HarmonyPatch(typeof(ForestCombatManager), "PrepareWave")]
+    public class ForestCombatManager_LeaveForest
+    {
+        static void Prefix()
+        {
+            if (WorldManager.instance.CurrentRunVariables.ForestWave == ForestCombatManager.instance.WickedWitchWave + 10)
+            {
+                ForestCombatManager.instance.WickedWitchWave += 10;
+                I.CRV.FinishedWickedWitch = false;
             }
         }
     }
