@@ -8,8 +8,8 @@ namespace EnemyDifficultyModNS
     {
         public void ApplyStrengthMultiplier(int percentage)
         {
-            EmemySpawning_Patch.SpawnMultiplier = Math.Clamp(percentage, 50f, 300f) / 100f;
-            Log($"Spawned Enemies Strength Multiplier: {EmemySpawning_Patch.SpawnMultiplier}");
+            EmemySpawning_Patch.StrengthMultiplier = Math.Clamp(percentage, 50f, 300f) / 100f;
+            Log($"Enemy Strength Multiplier: {EmemySpawning_Patch.StrengthMultiplier}");
         }
     }
 
@@ -17,17 +17,17 @@ namespace EnemyDifficultyModNS
     [HarmonyPatch(new Type[] { typeof(List<SetCardBagType>), typeof(float), typeof(bool) })]
     internal class EmemySpawning_Patch
     {
-        public static float SpawnMultiplier = 1.0f;
+        public static float StrengthMultiplier = 1.0f;
 
         static void Prefix(List<CardIdWithEquipment> __result, List<SetCardBagType> cardbags, ref float strength, bool canHaveInventory)
         {
             if (ForestCombatManager_SpawnWave.inForest)
             {
-                strength = ForestCombatManager_SpawnWave.strength * SpawnMultiplier;
+                strength = ForestCombatManager_SpawnWave.strength * StrengthMultiplier;
             }
             else
             {
-                strength *= SpawnMultiplier;
+                strength *= StrengthMultiplier;
             }
         }
     }
@@ -49,11 +49,11 @@ namespace EnemyDifficultyModNS
             bool loading = WM_IsLoadingSaveRound?.Value ?? true;
             if (!loading && __result is Combatable c && __result is not BaseVillager)
             {
-                if (__result.Id == Cards.wicked_witch && ForestCombatManager_SpawnWave.inForest && EnemyDifficultyMod.WitchMoreDangerous)
+                if (__result.Id == Cards.wicked_witch && ForestCombatManager_SpawnWave.inForest && EnemyDifficultyMod.WitchesRespawn)
                 {
-                    c.BaseCombatStats.MaxHealth *= ForestCombatManager_SpawnWave.wave / 10;
+                    c.BaseCombatStats.MaxHealth *= ForestCombatManager_SpawnWave.waveNumber / 10;
                 }
-                c.BaseCombatStats.MaxHealth = (int)(c.BaseCombatStats.MaxHealth * EmemySpawning_Patch.SpawnMultiplier);
+                c.BaseCombatStats.MaxHealth = (int)(c.BaseCombatStats.MaxHealth * EmemySpawning_Patch.StrengthMultiplier);
                 c.HealthPoints = c.ProcessedCombatStats.MaxHealth;
             }
         }
@@ -64,13 +64,14 @@ namespace EnemyDifficultyModNS
     {
         public static bool inForest = false;
         public static float strength = 0f;
-        public static int wave = 0;
+        public static int waveNumber = 0;
 
-        static void Prefix(ForestCombatManager __instance, int wave_)
+        static void Prefix(ForestCombatManager __instance, int wave)
         {
             inForest = EnemyDifficultyMod.ForestMoreDangerous;
-            strength = 10 * wave_ + 10;
-            wave = wave_;
+            strength = 10 * wave + 10;
+            waveNumber = wave;
+            I.Log($"SpawnWave {waveNumber} Strength {strength}");
         }
     }
 
@@ -79,7 +80,7 @@ namespace EnemyDifficultyModNS
     {
         static void Prefix()
         {
-            if (WorldManager.instance.CurrentRunVariables.ForestWave == ForestCombatManager.instance.WickedWitchWave + 10)
+            if (EnemyDifficultyMod.WitchesRespawn && WorldManager.instance.CurrentRunVariables.ForestWave == ForestCombatManager.instance.WickedWitchWave + 10)
             {
                 ForestCombatManager.instance.WickedWitchWave += 10;
                 I.CRV.FinishedWickedWitch = false;
