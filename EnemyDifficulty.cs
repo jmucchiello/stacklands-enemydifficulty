@@ -19,7 +19,7 @@ namespace EnemyDifficultyModNS
             instance = this;
             SavePatches();  // here
             SetupConfig();  // Settings.cs
-            SetupRunopts(); // Runopts.cs
+            //SetupRunopts(); // Runopts.cs
             WMCreateCard_Patch.Setup(I.WM);  // Patches.cs
             Harmony.PatchAll();
         }
@@ -42,9 +42,29 @@ namespace EnemyDifficultyModNS
 
         public override void Ready()
         {
-            saveHelper.Ready(Path);
+            //saveHelper.Ready(Path);
+            NoWitchNoPortal = null;
+            if (CheckNoWitchNoPortals())
+            {
+                configForestWaves.UI.NameTerm = "enemydifficultymod_forest_unavailable";
+                configForestWaves.UI.TooltipTerm = "enemydifficultymod_forest_unavailable_tooltip";
+                configWitchRespawnEnabled.UI.NameTerm = "enemydifficultymod_forest_unavailable";
+                configWitchRespawnEnabled.UI.TooltipTerm = "enemydifficultymod_forest_unavailable_tooltip";
+            }
+            Config.OnSave.Invoke();
             ApplyConfig();  // Settings.cs
             Log("Ready!");
+        }
+
+        private bool? NoWitchNoPortal;
+        private bool CheckNoWitchNoPortals()
+        {
+            if (!NoWitchNoPortal.HasValue)
+            {
+                NoWitchNoPortal = ModManager.LoadedMods.Find(n => n.Manifest.Id == "NoWitchNoPortal") != null;
+            }
+            Log($"NoWitchNoPortal {NoWitchNoPortal}");
+            return NoWitchNoPortal.Value;
         }
 
         private SaveHelper saveHelper;
@@ -58,8 +78,8 @@ namespace EnemyDifficultyModNS
                     return StrengthPercentage.ToString();
                 }
             };
-            WorldManagerPatches.LoadSaveRound += WM_OnLoad;
-            WorldManagerPatches.GetSaveRound += WM_OnSave;
+            //WorldManagerPatches.LoadSaveRound += WM_OnLoad;
+            //WorldManagerPatches.GetSaveRound += WM_OnSave;
             WorldManagerPatches.StartNewRound += WM_OnNewRound;
             WorldManagerPatches.Play += WM_OnPlay;
             WorldManagerPatches.ApplyPatches(Harmony);
@@ -67,8 +87,8 @@ namespace EnemyDifficultyModNS
 
         private void WM_OnNewRound(WorldManager wm)
         {
-            SaveMode = configTournament.Value;
-            ApplyStrengthMultiplier(StrengthPercentage);
+            //SaveMode = configTournament.Value;
+            ApplyStrengthMultiplier(InternalPercentage);
         }
 
         private void WM_OnSave(WorldManager wm, SaveRound saveRound)
@@ -98,16 +118,28 @@ namespace EnemyDifficultyModNS
 
         private void WM_OnPlay(WorldManager wm)
         {
+            I.CRV.ForestWave = 19;
+            Log($"Strength {StrengthModifier}; Drag {AllowEnemyDrags}; Forest {ForestMoreDangerous}; Witch {WitchesRespawn}; Notifications {AllowNotifications}; Witch Wave {ForestCombatManager.instance.WickedWitchWave}");
             Notification();
         }
 
         public void Notification()
         {
-            if (SaveMode != SaveSettingsMode.Disabled)
+            if (AllowNotifications)// SaveMode != SaveSettingsMode.Disabled)
             {
-                I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"),
-                                     I.Xlat($"enemydifficultymod_strength_{SaveMode}") +
-                                     ": " + ConfigEntryHelper.ColorText(Color.blue, $"{StrengthModifier}%"));
+                string text = I.Xlat("enemydifficultymod_strength") +
+                                     ": " + ConfigEntryHelper.ColorText(Color.blue, $"{StrengthModifier}%") + ".";
+                if (ForestMoreDangerous)
+                {
+                    text += "\n" + I.Xlat("enemydifficultymod_notify_forest") +
+                                     " " + ConfigEntryHelper.ColorText(Color.blue, I.Xlat(configForestWaves.Value ? "label_on" : "label_off")) + ".";
+                    if (WitchesRespawn)
+                    {
+                        text += "\n" + I.Xlat("enemydifficultymod_notify_witches") +
+                                     " " + ConfigEntryHelper.ColorText(Color.blue, I.Xlat(configWitchRespawnEnabled.Value ? "label_on" : "label_off")) + ".";
+                    }
+                }
+                I.GS.AddNotification(I.Xlat("enemydifficultymod_notify"), text);
             }
         }
     }

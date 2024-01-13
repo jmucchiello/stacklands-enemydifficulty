@@ -1,12 +1,24 @@
 Term	Notes	English
-enemydifficultymod_notify		Enemy Difficulty Mod
 enemydifficultymod_runopts		Modifier
 enemydifficultymod_strength		Enemy Health Modifier
 enemydifficultymod_strength_tooltip		Every enemy will have their Health modified by this percentage, including bosses.
 enemydifficultymod_strength_Casual		Enemy Health Modifer (From Mod Options)
 enemydifficultymod_strength_Tournament		Enemy Health Modifer (Tournament Mode)
 enemydifficultymod_strength_Tampered		Enemy Health Modifer (From Mod Options, Save File Broken)
-enemydifficultymod_forest		No cap on forest wave strength
-enemydifficultymod_forest_tooltip		Strength of forest waves after defeating the witch continue#to rise with no limit. Enemy Health Modifier is also still#applied to enemies in these waves.
-enemydifficultymod_witch		Witch appears every 10th wave
-enemydifficultymod_witch_tooltip		Witch strength also rises with wave level.
+enemydifficultymod_forest		Forest Wave Strength Always Increases
+enemydifficultymod_forest_tooltip		Strength of forest waves after defeating the witch continue#to rise with no limit. Enemy Health Modifier is applied to#enemies in these waves as usual.
+enemydifficultymod_witch		Witch Revives Every 10th Wave
+enemydifficultymod_witch_tooltip		Witch strength will increase with wave level.
+enemydifficultymod_dragmobs		Allow Enemies to be Moved
+enemydifficultymod_dragmobs_tooltip		Also allows Pirate Ships and Strange and Rare Portals to be moved.
+enemydifficultymod_notifications		Allow Notifications
+enemydifficultymod_notifications_tooltip		A courtesy notification reminds you of the enemy strength#setting when you start or continue a game. Disable this by setting#this to Off.
+enemydifficultymod_config_forest		Forest Settings
+enemydifficultymod_config_mod		Mod Settings
+enemydifficultymod_notify		Enemy Difficulty Mod
+enemydifficultymod_notify_forest		Forest waves increase forever?
+enemydifficultymod_notify_witches		Witches respawn?
+enemydifficultymod_forest_unavailable		Content disabled
+enemydifficultymod_forest_unavailable_tooltip		You have the Mod "lopi's No Witch = No Portal" installed.#Can't add content to forest after the witch is dead with it installed.#Disable it in the Mod menu to enable these settings.
+enemydifficultymod_witch_what?		What?
+enemydifficultymod_witch_returns		What's this? The witch is back!! "You cannot defeat me. I will always return."

@@ -1,5 +1,7 @@
 ﻿using CommonModNS;
 using HarmonyLib;
+using System.Collections;
+using System.Reflection;
 using UnityEngine;
 
 namespace EnemyDifficultyModNS
@@ -73,6 +75,31 @@ namespace EnemyDifficultyModNS
             waveNumber = wave;
             I.Log($"SpawnWave {waveNumber} Strength {strength}");
         }
+        static void Postfix(ForestCombatManager __instance)
+        {
+            if (waveNumber == ForestCombatManager.instance.WickedWitchWave && waveNumber > 10)
+            {
+                WickedWitch witch = Cutscenes.FindOrCreateWitch();
+                SpecialHit hit = witch.ProcessedCombatStats.SpecialHits.Find(x => x.HitType == SpecialHitType.Heal);
+                if (hit == null)
+                {
+                    hit = new SpecialHit() { HitType = SpecialHitType.Heal, Target = SpecialHitTarget.AllFriendly };
+                    witch.BaseCombatStats.SpecialHits.Add(hit);
+                }
+                hit.Chance = Mathf.Clamp((float)waveNumber, 0f, 50f);
+                if (waveNumber > 30)
+                {
+                    SpecialHit hit2 = witch.ProcessedCombatStats.SpecialHits.Find(x => x.HitType == SpecialHitType.Heal);
+                    if (hit2 == null)
+                    {
+                        hit2 = new SpecialHit() { HitType = SpecialHitType.Invulnerable, Target = SpecialHitTarget.AllFriendly };
+                        witch.BaseCombatStats.SpecialHits.Add(hit2);
+                    }
+                    hit2.Chance = Mathf.Clamp((float)(waveNumber - 30), 0f, 50f);
+                }
+            }
+            I.Log($"SpawnWave {waveNumber} Strength {strength}");
+        }
     }
 
     [HarmonyPatch(typeof(ForestCombatManager), "PrepareWave")]
@@ -80,11 +107,79 @@ namespace EnemyDifficultyModNS
     {
         static void Prefix()
         {
-            if (EnemyDifficultyMod.WitchesRespawn && WorldManager.instance.CurrentRunVariables.ForestWave == ForestCombatManager.instance.WickedWitchWave + 10)
+            if (EnemyDifficultyMod.WitchesRespawn && I.CRV.ForestWave % 10 == 9)
             {
-                ForestCombatManager.instance.WickedWitchWave += 10;
+                ForestCombatManager.instance.WickedWitchWave = I.CRV.ForestWave + 1;
                 I.CRV.FinishedWickedWitch = false;
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(ForestCombatManager), "FinishWave")]
+    public class ForestCombatManager_FinishWave
+    {
+        private readonly static MethodInfo miLayoutVillagers = AccessTools.Method(typeof(ForestCombatManager), "LayoutVillagers");
+        private readonly static MethodInfo miFocusCameraOn = AccessTools.Method(typeof(Cutscenes), "FocusCameraOnWitchAndVillagers");
+
+        private static bool Prefix(ForestCombatManager __instance)
+        {
+            ForestCombatManager.DeleteAllCorpses();
+            QuestManager.instance.SpecialActionComplete("completed_forest_wave");
+            ++I.WM.CurrentRunVariables.ForestWave;
+            I.WM.CurrentRunVariables.CanDropItem = true;
+            int forestWave = I.CRV.ForestWave;
+            __instance.CombatState = ForestCombatState.Finished;
+            miLayoutVillagers.Invoke(__instance, [(object)false]);
+
+            WorldManager.instance.QueueCutscene(
+                forestWave < 10 ? Cutscenes.ForestWaveEnd() :
+                forestWave == 10 ? Cutscenes.ForestLastWaveEnd() :
+                forestWave % 10 == 0 ? Cutscene() :
+                                Cutscenes.ForestEndlessWaveEnd());
+            return false;
+        }
+
+        private static IEnumerator Cutscene()
+        {
+            GameCanvas.instance.SetScreen<CutsceneScreen>();
+            GameCamera.instance.CenterOnBoard(WorldManager.instance.GetBoardWithId("forest"));
+            Cutscenes.Title = SokLoc.Translate("label_forest_wave_title");
+            miFocusCameraOn.Invoke(null, []);
+            AudioManager.me.PlaySound2D(ForestCombatManager.instance.WitchSounds, UnityEngine.Random.Range(1.1f, 1.3f), 0.5f);
+            WickedWitch witch = Cutscenes.FindOrCreateWitch();
+            WorldManager.instance.CreateSmoke(witch.MyGameCard.transform.position);
+            Cutscenes.Text = SokLoc.Translate("enemydifficultymod_witch_returns");
+            yield return Cutscenes.WaitForContinueClicked(SokLoc.Translate("label_okay"));
+            Cutscenes.Text = SokLoc.Translate("label_forest_wave_end2");
+            yield return Cutscenes.WaitForAnswer(I.Xlat("label_forest_wave_end_wave_10"), I.Xlat("label_forest_wave_end_leave"));
+            if (WorldManager.instance.ContinueButtonIndex == 0)
+            {
+                WorldManager.instance.CreateSmoke(witch.MyGameCard.transform.position);
+                witch.MyGameCard.DestroyCard();
+                ForestCombatManager.instance.PrepareWave();
+                Cutscenes.Text = SokLoc.Translate("label_forest_fight_wave_10");
+                yield return Cutscenes.WaitForContinueClicked(SokLoc.Translate("label_okay"));
+                AudioManager.me.PlaySound2D(ForestCombatManager.instance.WitchSounds, UnityEngine.Random.Range(1.1f, 1.3f), 0.5f);
+                GameCamera.instance.TargetPositionOverride = null;
+                ForestCombatManager.instance.StartWave();
+            }
+            else
+            {
+                Cutscenes.Text = SokLoc.Translate("label_forest_leave");
+                yield return Cutscenes.WaitForContinueClicked(SokLoc.Translate("label_okay"));
+                WorldManager.instance.CreateSmoke(witch.MyGameCard.transform.position);
+                witch.MyGameCard.DestroyCard();
+                AudioManager.me.PlaySound2D(ForestCombatManager.instance.WitchSounds, UnityEngine.Random.Range(1.1f, 1.3f), 0.5f);
+                GameCamera.instance.TargetPositionOverride = null;
+                ForestCombatManager.instance.LeaveForest();
+            }
+            Cutscenes.Text = "";
+            Cutscenes.Title = "";
+            GameCamera.instance.TargetPositionOverride = null;
+            GameCamera.instance.CameraPositionDistanceOverride = null;
+            GameCamera.instance.TargetCardOverride = null;
+            GameCanvas.instance.SetScreen<GameScreen>();
+            I.WM.currentAnimation = null;
         }
     }
 }
